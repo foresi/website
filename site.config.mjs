@@ -3,6 +3,8 @@ export const site = {
 	name: 'Foresi',
 	url: 'https://foresi.app/',
 	github: 'https://github.com/foresi/foresi',
+	// Public key of the Ahrefs Web Analytics project "Foresi"; it is in every page's HTML anyway.
+	ahrefsAnalyticsKey: 'zGxqM+xzo30o6QKEAGhZ8Q',
 	// The same sentence as the GitHub repo description. Change both together.
 	description:
 		'Open-source business system for small firms: contacts, invoices, payments, projects and tasks, with a REST API and an MCP server.',

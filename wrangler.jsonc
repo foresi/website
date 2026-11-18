@@ -8,6 +8,8 @@
 		"not_found_handling": "404-page"
 	},
 	"workers_dev": true,
+	// Workers Builds runs `wrangler preview` for branches other than main.
+	"previews": {},
 	"routes": [
 		{ "pattern": "foresi.app", "custom_domain": true },
 		{ "pattern": "www.foresi.app", "custom_domain": true }

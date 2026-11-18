@@ -21,7 +21,7 @@ npm run build && npm run check:links
 
 ## Deploy
 
-GitHub Actions builds every pull request. Pushes to `main`, a schedule every six hours (to pick up docs changes in foresi/foresi) and manual runs deploy to Cloudflare with `wrangler deploy`.
+Cloudflare Workers Builds, connected to this repository, deploys every push to `main` with `npm ci && npm run build` and `npx wrangler deploy`, and builds a preview URL for every other branch. Docs changes in foresi/foresi trigger a rebuild through a Workers Builds deploy hook, which foresi/foresi keeps as its `WEBSITE_DEPLOY_HOOK` secret. GitHub Actions only checks pull requests: build and internal links. No Cloudflare API token is stored in GitHub.
 
 ## Licence
 

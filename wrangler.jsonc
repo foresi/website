@@ -1,0 +1,15 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "foresi-website",
+	"compatibility_date": "2026-11-01",
+	"assets": {
+		"directory": "./dist",
+		"html_handling": "auto-trailing-slash",
+		"not_found_handling": "404-page"
+	},
+	"workers_dev": true,
+	"routes": [
+		{ "pattern": "foresi.app", "custom_domain": true },
+		{ "pattern": "www.foresi.app", "custom_domain": true }
+	]
+}

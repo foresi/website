@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://foresi.app/sitemap-index.xml

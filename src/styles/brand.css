@@ -35,7 +35,7 @@
 	--sl-color-hairline-shade: var(--line);
 }
 
-/* Starlight's base layer (applies before the light theme script runs) */
+/* Dark theme: the same palette, inverted */
 :root {
 	--sl-color-accent-low: #243a2d;
 	--sl-color-accent: #9fb8a5;
@@ -60,6 +60,5 @@ h1, h2, h3, h4, .site-title, .hero h1 {
 	color: var(--sl-color-white);
 }
 
-:root { color-scheme: light; }
-body { background: var(--paper); }
+:root[data-theme='light'] body { background: var(--paper); }
 [data-has-hero] .sl-markdown-content { max-width: 42rem; font-size: 1.0625rem; line-height: 1.65; }

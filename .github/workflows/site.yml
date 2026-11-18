@@ -24,4 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Release pages read the GitHub releases of foresi/foresi; the token only raises the rate limit.
+          GITHUB_TOKEN: ${{ github.token }}
       - run: npm run check:links

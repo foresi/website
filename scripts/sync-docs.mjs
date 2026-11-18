@@ -15,10 +15,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join, posix, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { groups, repo } from '../docs.config.mjs';
+import { linkRewriter } from './links.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'src/content/docs');
 const ref = process.env.FORESI_REF || 'main';
+const rewriteLinks = linkRewriter({ repo, ref });
 
 function checkout() {
 	if (process.env.FORESI_SOURCE) return process.env.FORESI_SOURCE;
@@ -34,44 +36,6 @@ function walk(dir) {
 		const path = join(dir, name);
 		return statSync(path).isDirectory() ? walk(path) : [path];
 	});
-}
-
-// Repo path (posix) → site route, or null when the file is not published.
-function routeFor(repoPath) {
-	if (repoPath === 'CHANGELOG.md') return '/changelog/';
-	if (repoPath === 'ROADMAP.md') return '/roadmap/';
-	if (repoPath.startsWith('docs/') && repoPath.endsWith('.md')) return `/${repoPath.slice(0, -3).toLowerCase()}/`;
-	return null;
-}
-
-function rewriteTarget(target, fromRepoPath, isImage) {
-	if (/^([a-z]+:|#|\/\/)/i.test(target)) return target;
-	const [path, hash] = target.split('#');
-	const repoPath = path.startsWith('/')
-		? path.slice(1)
-		: posix.normalize(posix.join(posix.dirname(fromRepoPath), path));
-	const anchor = hash ? `#${hash}` : '';
-	const route = routeFor(repoPath);
-	if (route && !isImage) return route + anchor;
-	if (isImage) return `https://raw.githubusercontent.com/${repo}/${ref}/${repoPath}`;
-	const kind = repoPath.endsWith('/') || !posix.extname(repoPath) ? 'tree' : 'blob';
-	return `https://github.com/${repo}/${kind}/${ref}/${repoPath.replace(/\/$/, '')}${anchor}`;
-}
-
-function rewriteLinks(markdown, fromRepoPath) {
-	let inFence = false;
-	return markdown
-		.split('\n')
-		.map((line) => {
-			if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
-			if (inFence) return line;
-			return line
-				.replace(/(!?)\[([^\]]*)\]\(([^)\s]+)(\s+"[^"]*")?\)/g, (_m, bang, text, target, title = '') =>
-					`${bang}[${text}](${rewriteTarget(target, fromRepoPath, bang === '!')}${title})`,
-				)
-				.replace(/^(\s*\[[^\]]+\]:\s*)(\S+)/, (_m, head, target) => head + rewriteTarget(target, fromRepoPath, false));
-		})
-		.join('\n');
 }
 
 function plain(text) {
@@ -97,7 +61,7 @@ function describe(body) {
 
 const yaml = (value) => JSON.stringify(value);
 
-function convert(source, repoPath, outPath, order) {
+function convert(source, repoPath, outPath, order, lead = '') {
 	const raw = readFileSync(source, 'utf8').replace(/\r\n/g, '\n');
 	const match = raw.match(/^# (.+)\n/m);
 	if (!match) throw new Error(`${repoPath}: no top-level heading to use as the title`);
@@ -114,7 +78,7 @@ function convert(source, repoPath, outPath, order) {
 		'',
 	].filter((line) => line !== null);
 	mkdirSync(dirname(outPath), { recursive: true });
-	writeFileSync(outPath, `${frontmatter.join('\n')}\n<!-- Generated from ${repo}/${repoPath}. Edit it there, not here. -->\n\n${body}\n`);
+	writeFileSync(outPath, `${frontmatter.join('\n')}\n<!-- Generated from ${repo}/${repoPath}. Edit it there, not here. -->\n\n${lead}${body}\n`);
 }
 
 const source = checkout();
@@ -131,11 +95,15 @@ for (const file of docFiles) {
 	convert(file, repoPath, join(outDir, repoPath.toLowerCase()), order === -1 ? undefined : order);
 }
 
-// Changelog and roadmap at the repo root.
+// Changelog and roadmap at the repo root. The changelog is closed at 0.5.0;
+// later versions are GitHub releases, shown on /releases/.
+const leads = {
+	'CHANGELOG.md': ':::note\nThis changelog keeps the history up to 0.5.0. Every later version, with its notes and upgrade steps, is on the [Releases](/releases/) page.\n:::\n\n',
+};
 for (const [file, out] of [['CHANGELOG.md', 'changelog.md'], ['ROADMAP.md', 'roadmap.md']]) {
 	const path = join(source, file);
 	if (!existsSync(path)) throw new Error(`${file} is missing in ${repo}@${ref}`);
-	convert(path, file, join(outDir, out));
+	convert(path, file, join(outDir, out), undefined, leads[file] ?? '');
 }
 
 // Top-level docs that no sidebar group lists still get published; say so,

@@ -40,7 +40,7 @@ export function sidebar() {
 		...(more.length ? [{ label: 'More', items: more.map((name) => `docs/${name}`) }] : []),
 		...(sub('adr') ? [{ label: 'Architecture decisions', collapsed: true, items: [{ autogenerate: { directory: 'docs/adr' } }] }] : []),
 		...(sub('design') ? [{ label: 'Design notes', collapsed: true, items: [{ autogenerate: { directory: 'docs/design' } }] }] : []),
-		{ label: 'Project', items: ['changelog', 'roadmap', 'devlog'] },
+		{ label: 'Project', items: [{ label: 'Releases', link: '/releases/' }, 'changelog', 'roadmap', 'devlog'] },
 	];
 }
 
@@ -74,7 +74,11 @@ export function llmsLinks(siteUrl) {
 		const lines = s.items.filter((n) => present.has(n)).map((n) => line(`docs/${n}.md`, `docs/${n}/`)).filter(Boolean);
 		if (lines.length) out.push(`## ${s.label}\n\n${lines.join('\n')}`);
 	}
-	const project = [line('changelog.md', 'changelog/'), line('roadmap.md', 'roadmap/')].filter(Boolean);
+	const project = [
+		`- [Releases](${siteUrl}releases/): every version since 0.5.0 with its release notes and upgrade steps`,
+		line('changelog.md', 'changelog/'),
+		line('roadmap.md', 'roadmap/'),
+	].filter(Boolean);
 	if (project.length) out.push(`## Project\n\n${project.join('\n')}`);
 	return out.join('\n\n');
 }

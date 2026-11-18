@@ -1,0 +1,16 @@
+---
+// The newest release, for the home page. Renders nothing when none was loaded.
+import { formatDate, releaseLink, releases } from '../lib/release-list';
+
+const [latest] = await releases();
+---
+
+{
+	latest && (
+		<p class="latest-release">
+			Latest release: <a href={releaseLink(latest.data.version)}><strong>{latest.data.tag}</strong></a>
+			{latest.data.title && <> · {latest.data.title}</>} · {formatDate(latest.data.date)} ·{' '}
+			<a href="/releases/">All releases</a>
+		</p>
+	)
+}

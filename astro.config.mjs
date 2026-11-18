@@ -16,6 +16,10 @@ export default defineConfig({
 			// Ahrefs Web Analytics: cookieless, no consent banner needed.
 			head: [
 				{
+					tag: 'link',
+					attrs: { rel: 'alternate', type: 'application/atom+xml', title: 'Foresi releases', href: '/releases/feed.xml' },
+				},
+				{
 					tag: 'script',
 					attrs: { src: 'https://analytics.ahrefs.com/analytics.js', 'data-key': site.ahrefsAnalyticsKey, async: true },
 				},

@@ -1,0 +1,200 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Badge } from '@astrojs/starlight/components';
+import { repo } from '../../../docs.config.mjs';
+import { formatDate, releaseLink, releases } from '../../lib/release-list';
+
+const all = await releases();
+const latest = all[0];
+// Oldest first: the order in which upgrade steps are applied.
+const withSteps = [...all].reverse().filter((r) => r.data.upgrading);
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'Releases',
+		description: 'Every Foresi version with its release notes and upgrade steps, newest first.',
+	}}
+	headings={[
+		{ depth: 2, slug: 'all-releases', text: 'All releases' },
+		{ depth: 2, slug: 'upgrading-across-versions', text: 'Upgrading across versions' },
+	]}
+>
+	<p>
+		Every change merged into Foresi that adds, fixes or speeds up something is released as a new version.
+		Each release has its own page with its notes. A release marked <Badge text="Upgrading" variant="caution" /> has
+		steps to take when you install it. The history up to 0.5.0 is in the <a href="/changelog/">changelog</a>.
+	</p>
+	<p>
+		Follow new releases with the <a href="/releases/feed.xml">Atom feed</a> or on
+		<a href={`https://github.com/${repo}/releases`}>GitHub</a>.
+	</p>
+
+	<h2 id="all-releases">All releases</h2>
+	{
+		all.length ? (
+			<ul class="release-list">
+				{all.map((r) => (
+					<li>
+						<a href={releaseLink(r.data.version)}>
+							<strong>{r.data.tag}</strong>
+						</a>
+						<time datetime={r.data.date.toISOString()}>{formatDate(r.data.date)}</time>
+						{(r.data.title || r.data.summary) && <span class="release-title">{r.data.title || r.data.summary}</span>}
+						{r.data.upgrading && <Badge text="Upgrading" variant="caution" />}
+						{r.data.prerelease && <Badge text="Pre-release" variant="note" />}
+					</li>
+				))}
+			</ul>
+		) : (
+			<p>
+				The releases could not be loaded when this page was built. They are all on
+				<a href={`https://github.com/${repo}/releases`}>GitHub</a>.
+			</p>
+		)
+	}
+
+	<h2 id="upgrading-across-versions">Upgrading across versions</h2>
+	{
+		all.length > 1 ? (
+			<>
+				<p>
+					Skipping versions? Pick the version you run and the one you are moving to. The steps of every release in
+					between are listed below, oldest first, which is the order to take them in.
+				</p>
+				<form class="upgrade-range" data-upgrade-range>
+					<label>
+						From
+						<select name="from">
+							{all.map((r, i) => (
+								<option value={r.data.version} selected={i === all.length - 1}>
+									{r.data.tag}
+								</option>
+							))}
+						</select>
+					</label>
+					<label>
+						to
+						<select name="to">
+							{all.map((r) => (
+								<option value={r.data.version} selected={r === latest}>
+									{r.data.tag}
+								</option>
+							))}
+						</select>
+					</label>
+				</form>
+				<p class="upgrade-summary" data-upgrade-summary aria-live="polite">
+					Upgrade steps of every release:
+				</p>
+				<div data-upgrade-steps>
+					{withSteps.map((r) => (
+						<section class="upgrade-step" data-version={r.data.version}>
+							<h3>
+								<a href={releaseLink(r.data.version)}>{r.data.tag}</a>
+								{r.data.title && <span class="release-title">{r.data.title}</span>}
+							</h3>
+							<Fragment set:html={r.data.upgrading} />
+						</section>
+					))}
+				</div>
+				<p data-upgrade-none hidden>
+					No release in this range has upgrade steps.
+				</p>
+			</>
+		) : (
+			<p>Once there are two releases or more, the upgrade steps between any two of them are collected here.</p>
+		)
+	}
+</StarlightPage>
+
+<script>
+	import { compareVersions } from '../../lib/semver';
+
+	const form = document.querySelector<HTMLFormElement>('[data-upgrade-range]');
+	if (form) {
+		const from = form.elements.namedItem('from') as HTMLSelectElement;
+		const to = form.elements.namedItem('to') as HTMLSelectElement;
+		const summary = document.querySelector<HTMLElement>('[data-upgrade-summary]')!;
+		const none = document.querySelector<HTMLElement>('[data-upgrade-none]')!;
+		const steps = [...document.querySelectorAll<HTMLElement>('[data-upgrade-steps] [data-version]')];
+		const known = new Set([...from.options].map((o) => o.value));
+
+		const params = new URLSearchParams(location.search);
+		if (known.has(params.get('from') ?? '')) from.value = params.get('from')!;
+		if (known.has(params.get('to') ?? '')) to.value = params.get('to')!;
+
+		const update = (push: boolean) => {
+			if (compareVersions(from.value, to.value) > 0) [from.value, to.value] = [to.value, from.value];
+			let shown = 0;
+			for (const step of steps) {
+				const v = step.dataset.version!;
+				const inRange = compareVersions(v, from.value) > 0 && compareVersions(v, to.value) <= 0;
+				step.hidden = !inRange;
+				if (inRange) shown++;
+			}
+			const label = (s: HTMLSelectElement) => s.selectedOptions[0]?.textContent?.trim() ?? s.value;
+			summary.textContent =
+				from.value === to.value
+					? `${label(from)} is the version you picked twice; there is nothing to upgrade.`
+					: `From ${label(from)} to ${label(to)}: ${shown} ${shown === 1 ? 'release has' : 'releases have'} upgrade steps.`;
+			none.hidden = shown > 0 || from.value === to.value;
+			if (push) {
+				const url = new URL(location.href);
+				url.searchParams.set('from', from.value);
+				url.searchParams.set('to', to.value);
+				history.replaceState(null, '', url);
+			}
+		};
+		form.addEventListener('change', () => update(true));
+		update(false);
+	}
+</script>
+
+<style>
+	.release-list {
+		list-style: none;
+		padding-inline-start: 0;
+	}
+	.release-list li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.25rem 0.75rem;
+		padding-block: 0.5rem;
+		border-bottom: 1px solid var(--sl-color-hairline);
+	}
+	.release-list time,
+	.release-title {
+		color: var(--sl-color-gray-2);
+	}
+	.release-list time {
+		font-size: var(--sl-text-sm);
+	}
+	h3 .release-title {
+		font-size: var(--sl-text-base);
+		font-weight: normal;
+		margin-inline-start: 0.5rem;
+	}
+	.upgrade-range {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 1.5rem;
+	}
+	.upgrade-range label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.upgrade-range select {
+		font: inherit;
+		padding: 0.25rem 0.5rem;
+		color: var(--sl-color-white);
+		background: var(--sl-color-black);
+		border: 1px solid var(--sl-color-gray-4);
+		border-radius: 0.25rem;
+	}
+	.upgrade-step[hidden] {
+		display: none;
+	}
+</style>

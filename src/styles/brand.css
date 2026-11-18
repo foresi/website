@@ -1,0 +1,65 @@
+/* martin-bezdek.cz brand family: paper, green, greys. Colours only from this palette. */
+:root {
+	--paper: #f7f5f0;
+	--card: #ffffff;
+	--ink: #1e1f1c;
+	--text: #3e3d38;
+	--muted: #6b6a63;
+	--line: #e5e1d7;
+	--green: #2f4a3a;
+	--green-soft: #e6ece5;
+	--sand: #efebe2;
+
+	--sl-font: 'Inter', system-ui, sans-serif;
+	--sl-font-heading: 'Gelasio', Georgia, serif;
+}
+
+/* Light theme */
+:root[data-theme='light'] {
+	--sl-color-accent-low: var(--green-soft);
+	--sl-color-accent: var(--green);
+	--sl-color-accent-high: var(--green);
+	--sl-color-white: var(--ink);
+	--sl-color-gray-1: var(--ink);
+	--sl-color-gray-2: var(--text);
+	--sl-color-gray-3: var(--muted);
+	--sl-color-gray-4: #9a978d;
+	--sl-color-gray-5: var(--line);
+	--sl-color-gray-6: var(--sand);
+	--sl-color-gray-7: var(--paper);
+	--sl-color-black: var(--paper);
+	--sl-color-bg-nav: var(--paper);
+	--sl-color-bg-sidebar: var(--paper);
+	--sl-color-hairline-light: var(--line);
+	--sl-color-hairline: var(--line);
+	--sl-color-hairline-shade: var(--line);
+}
+
+/* Starlight's base layer (applies before the light theme script runs) */
+:root {
+	--sl-color-accent-low: #243a2d;
+	--sl-color-accent: #9fb8a5;
+	--sl-color-accent-high: var(--green-soft);
+	--sl-color-white: var(--paper);
+	--sl-color-gray-1: var(--sand);
+	--sl-color-gray-2: var(--line);
+	--sl-color-gray-3: #b9b3a4;
+	--sl-color-gray-4: var(--muted);
+	--sl-color-gray-5: var(--text);
+	--sl-color-gray-6: #2a2b27;
+	--sl-color-black: var(--ink);
+}
+
+h1, h2, h3, h4, .site-title, .hero h1 {
+	font-family: var(--sl-font-heading);
+	font-weight: 500;
+}
+
+.site-title {
+	font-size: 1.5rem;
+	color: var(--sl-color-white);
+}
+
+:root { color-scheme: light; }
+body { background: var(--paper); }
+[data-has-hero] .sl-markdown-content { max-width: 42rem; font-size: 1.0625rem; line-height: 1.65; }

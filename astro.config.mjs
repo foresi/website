@@ -16,10 +16,6 @@ export default defineConfig({
 			social: [{ icon: 'github', label: 'GitHub', href: site.github }],
 			editLink: { baseUrl: 'https://github.com/foresi/website/edit/main/' },
 			customCss: ['./src/styles/fonts.css', './src/styles/brand.css'],
-			components: {
-				ThemeProvider: './src/components/LightTheme.astro',
-				ThemeSelect: './src/components/NoThemeSelect.astro',
-			},
 			sidebar: sidebar(),
 			plugins: [
 				starlightLlmsTxt({

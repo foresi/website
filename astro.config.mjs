@@ -13,6 +13,13 @@ export default defineConfig({
 			title: site.name,
 			description: site.description,
 			favicon: '/favicon.svg',
+			// Ahrefs Web Analytics: cookieless, no consent banner needed.
+			head: [
+				{
+					tag: 'script',
+					attrs: { src: 'https://analytics.ahrefs.com/analytics.js', 'data-key': site.ahrefsAnalyticsKey, async: true },
+				},
+			],
 			social: [{ icon: 'github', label: 'GitHub', href: site.github }],
 			editLink: { baseUrl: 'https://github.com/foresi/website/edit/main/' },
 			customCss: ['./src/styles/fonts.css', './src/styles/brand.css'],

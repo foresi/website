@@ -1,0 +1,66 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Badge } from '@astrojs/starlight/components';
+import { render } from 'astro:content';
+import { formatDate, releaseHeading, releaseLink, releases, type ReleaseEntry } from '../../lib/release-list';
+import { compareVersions } from '../../lib/semver';
+
+export async function getStaticPaths() {
+	const all = await releases();
+	return all.map((release, i) => ({
+		params: { version: release.data.version },
+		props: { release, newer: all[i - 1], older: all[i + 1] },
+	}));
+}
+
+interface Props {
+	release: ReleaseEntry;
+	newer?: ReleaseEntry;
+	older?: ReleaseEntry;
+}
+
+const { release, newer, older } = Astro.props;
+const r = release.data;
+const { Content, headings } = await render(release);
+const inChangelog = compareVersions(r.version, '0.5.0') <= 0;
+const link = (e?: ReleaseEntry) => e && { link: releaseLink(e.data.version), label: e.data.tag };
+---
+
+<StarlightPage
+	frontmatter={{
+		title: releaseHeading(r),
+		description: r.summary || `Release notes of Foresi ${r.tag}.`,
+		prev: link(older) ?? false,
+		next: link(newer) ?? false,
+	}}
+	headings={headings}
+>
+	<p class="release-meta">
+		<time datetime={r.date.toISOString()}>Released {formatDate(r.date)}</time>
+		{r.upgrading && <Badge text="Upgrading" variant="caution" />}
+		{r.prerelease && <Badge text="Pre-release" variant="note" />}
+		<span>
+			<a href={r.url}>On GitHub</a> · <a href="/releases/">All releases</a>
+			{inChangelog && <> · <a href="/changelog/">Changelog</a></>}
+		</span>
+	</p>
+	{
+		r.upgrading && older && (
+			<p>
+				Skipping versions? <a href={`/releases/?to=${r.version}#upgrading-across-versions`}>Collect the upgrade steps</a> from the version you run to this one.
+			</p>
+		)
+	}
+	<Content />
+</StarlightPage>
+
+<style>
+	.release-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.75rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+	}
+</style>
